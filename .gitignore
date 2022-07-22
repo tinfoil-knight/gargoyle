@@ -19,5 +19,8 @@
 # Go workspace file
 go.work
 
+# Build dir for https://github.com/cosmtrek/air
+tmp
+
 # Custom
 TODO.md

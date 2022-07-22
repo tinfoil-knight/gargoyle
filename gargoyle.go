@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/tinfoil-knight/gargoyle/internal/server"
+)
 
 func main() {
-	fmt.Println("Hello World!")
+	server.NewHTTPServer()
 }
