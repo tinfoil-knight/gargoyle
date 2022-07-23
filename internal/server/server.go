@@ -6,31 +6,44 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"sync"
 
 	"github.com/tinfoil-knight/gargoyle/internal/loadbalancer"
 )
 
 type Config struct {
-	ReverseProxy struct {
+	ReverseProxy []struct {
+		Source  string   `json:"source"`
 		Targets []string `json:"targets"`
 	} `json:"reverse_proxy"`
 }
 
 func NewHTTPServer() {
-	addr := ":8080"
 	config := loadConfig("./config.json")
 
-	lb, err := loadbalancer.NewLoadBalancer(config.ReverseProxy.Targets)
-	if err != nil {
-		panic(err)
+	var wg sync.WaitGroup
+
+	for _, rp := range config.ReverseProxy {
+		wg.Add(1)
+
+		lb, err := loadbalancer.NewLoadBalancer(rp.Targets)
+		if err != nil {
+			panic(err)
+		}
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("/", handleAllRequests(lb))
+
+		addr := rp.Source
+
+		go func() {
+			defer wg.Done()
+			log.Printf("INFO: Started listening on %s", addr)
+			log.Fatal(http.ListenAndServe(addr, logHTTPRequest(mux)))
+		}()
 	}
 
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/", handleAllRequests(lb))
-
-	log.Printf("INFO: Starting server on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, logHTTPRequest(mux)))
+	wg.Wait()
 }
 
 func handleAllRequests(lb *loadbalancer.LoadBalancer) func(w http.ResponseWriter, r *http.Request) {
