@@ -13,8 +13,9 @@ import (
 
 type Config struct {
 	ReverseProxy []struct {
-		Source  string   `json:"source"`
-		Targets []string `json:"targets"`
+		Source    string   `json:"source"`
+		Algorithm string   `json:"algorithm"`
+		Targets   []string `json:"targets"`
 	} `json:"reverse_proxy"`
 }
 
@@ -26,7 +27,7 @@ func NewHTTPServer() {
 	for _, rp := range config.ReverseProxy {
 		wg.Add(1)
 
-		lb, err := loadbalancer.NewLoadBalancer(rp.Targets)
+		lb, err := loadbalancer.NewLoadBalancer(rp.Algorithm, rp.Targets)
 		if err != nil {
 			panic(err)
 		}

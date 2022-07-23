@@ -8,6 +8,10 @@ import (
 
 type LoadBalancer struct {
 	services []*Service
+	// lastIndex stores index of the last selected target for some load balancing algorithms
+	lastIndex int
+	// possible values: "random", "round-robin"
+	algorithm string
 }
 
 type Service struct {
@@ -15,7 +19,7 @@ type Service struct {
 	proxy *httputil.ReverseProxy
 }
 
-func NewLoadBalancer(targetUrls []string) (*LoadBalancer, error) {
+func NewLoadBalancer(algorithm string, targetUrls []string) (*LoadBalancer, error) {
 	services := make([]*Service, len(targetUrls))
 	for idx, targetUrl := range targetUrls {
 		url, err := url.Parse(targetUrl)
@@ -26,15 +30,21 @@ func NewLoadBalancer(targetUrls []string) (*LoadBalancer, error) {
 		services[idx] = &Service{url: url, proxy: proxy}
 	}
 	return &LoadBalancer{
-		services: services,
+		services:  services,
+		algorithm: algorithm,
 	}, nil
 }
 
 func (lb *LoadBalancer) GetSelectedProxy() *httputil.ReverseProxy {
-	target := lb.selectTarget()
+	var idx int
+	switch lb.algorithm {
+	case "round-robin":
+		idx = (lb.lastIndex + 1) % len(lb.services)
+		lb.lastIndex = idx
+	case "random":
+	default:
+		idx = rand.Int() % len(lb.services)
+	}
+	target := lb.services[idx]
 	return target.proxy
-}
-
-func (lb *LoadBalancer) selectTarget() *Service {
-	return lb.services[rand.Int()%len(lb.services)]
 }
