@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"os"
 	"sync"
 
@@ -12,11 +13,13 @@ import (
 )
 
 type Config struct {
-	ReverseProxy []struct {
-		Source    string   `json:"source"`
-		Algorithm string   `json:"algorithm"`
-		Targets   []string `json:"targets"`
-	} `json:"reverse_proxy"`
+	ReverseProxies []ReverseProxy `json:"reverse_proxy"`
+}
+
+type ReverseProxy struct {
+	Source    string   `json:"source"`
+	Algorithm string   `json:"algorithm"`
+	Targets   []string `json:"targets"`
 }
 
 func NewHTTPServer() {
@@ -24,34 +27,44 @@ func NewHTTPServer() {
 
 	var wg sync.WaitGroup
 
-	for _, rp := range config.ReverseProxy {
+	for _, rp := range config.ReverseProxies {
+		rp := rp
 		wg.Add(1)
-
-		lb, err := loadbalancer.NewLoadBalancer(rp.Algorithm, rp.Targets)
-		if err != nil {
-			panic(err)
-		}
-
-		mux := http.NewServeMux()
-		mux.HandleFunc("/", handleAllRequests(lb))
-
-		addr := rp.Source
-
 		go func() {
 			defer wg.Done()
-			log.Printf("INFO: Started listening on %s", addr)
-			log.Fatal(http.ListenAndServe(addr, logHTTPRequest(mux)))
+			log.Printf("INFO: Starting listening on %s", rp.Source)
+			log.Fatal(NewReverseProxy(rp))
 		}()
 	}
 
 	wg.Wait()
 }
 
-func handleAllRequests(lb *loadbalancer.LoadBalancer) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		proxy := lb.GetSelectedProxy()
-		proxy.ServeHTTP(w, r)
+func NewReverseProxy(rp ReverseProxy) error {
+	if len(rp.Targets) == 0 {
+		panic("no targets specified")
 	}
+	mux := http.NewServeMux()
+	if len(rp.Targets) == 1 {
+		url, err := url.Parse(rp.Targets[0])
+		if err != nil {
+			return err
+		}
+		proxy := httputil.NewSingleHostReverseProxy(url)
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			proxy.ServeHTTP(w, r)
+		})
+	} else {
+		lb, err := loadbalancer.NewLoadBalancer(rp.Algorithm, rp.Targets)
+		if err != nil {
+			return err
+		}
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			proxy := lb.GetSelectedProxy()
+			proxy.ServeHTTP(w, r)
+		})
+	}
+	return http.ListenAndServe(rp.Source, logHTTPRequest(mux))
 }
 
 func logHTTPRequest(handler http.Handler) http.Handler {
