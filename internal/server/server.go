@@ -1,26 +1,14 @@
 package server
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"sync"
 
 	"github.com/tinfoil-knight/gargoyle/internal/loadbalancer"
 )
-
-type Config struct {
-	ReverseProxies []ReverseProxy `json:"reverse_proxy"`
-}
-
-type ReverseProxy struct {
-	Source    string   `json:"source"`
-	Algorithm string   `json:"algorithm"`
-	Targets   []string `json:"targets"`
-}
 
 func NewHTTPServer() {
 	config := loadConfig("./config.json")
@@ -73,17 +61,4 @@ func logHTTPRequest(handler http.Handler) http.Handler {
 		dmp, _ := httputil.DumpRequest(r, true)
 		log.Printf("%s", string(dmp))
 	})
-}
-
-func loadConfig(filePath string) *Config {
-	var config Config
-	f, err := os.Open(filePath)
-	defer f.Close()
-	if err != nil {
-		panic(err)
-	}
-	if err = json.NewDecoder(f).Decode(&config); err != nil {
-		panic(err)
-	}
-	return &config
 }

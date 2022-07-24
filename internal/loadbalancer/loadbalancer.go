@@ -1,10 +1,13 @@
 package loadbalancer
 
 import (
+	"errors"
 	"math/rand"
 	"net/http/httputil"
 	"net/url"
 )
+
+var ErrInvalidAlgorithm = errors.New("ERR invalid load balancing algorithm provided")
 
 type LoadBalancer struct {
 	services []*Service
@@ -42,8 +45,9 @@ func (lb *LoadBalancer) GetSelectedProxy() *httputil.ReverseProxy {
 		idx = (lb.lastIndex + 1) % len(lb.services)
 		lb.lastIndex = idx
 	case "random":
-	default:
 		idx = rand.Int() % len(lb.services)
+	default:
+		panic(ErrInvalidAlgorithm)
 	}
 	target := lb.services[idx]
 	return target.proxy
