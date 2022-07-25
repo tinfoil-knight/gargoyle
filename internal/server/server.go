@@ -6,6 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/tinfoil-knight/gargoyle/internal/loadbalancer"
 )
@@ -51,6 +52,13 @@ func NewReverseProxy(rp ReverseProxy) error {
 			proxy := lb.GetSelectedProxy()
 			proxy.ServeHTTP(w, r)
 		})
+		if rp.HealthCheck.Enabled {
+			go lb.RunHealthChecks(
+				time.Duration(rp.HealthCheck.Interval)*time.Second,
+				time.Duration(rp.HealthCheck.Timeout)*time.Second,
+				rp.HealthCheck.Path,
+			)
+		}
 	}
 	return http.ListenAndServe(rp.Source, logHTTPRequest(mux))
 }
