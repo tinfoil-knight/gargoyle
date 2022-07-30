@@ -16,20 +16,21 @@ func NewHTTPServer() {
 
 	var wg sync.WaitGroup
 
-	for _, rp := range config.ReverseProxies {
-		rp := rp
+	for _, service := range config.Services {
+		service := service
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			log.Printf("INFO: Starting listening on %s", rp.Source)
-			log.Fatal(NewReverseProxy(rp))
+			log.Printf("INFO: Starting listening on %s", service.Source)
+			log.Fatal(NewReverseProxy(service))
 		}()
 	}
 
 	wg.Wait()
 }
 
-func NewReverseProxy(rp ReverseProxy) error {
+func NewReverseProxy(service Service) error {
+	rp := service.ReverseProxy
 	if len(rp.Targets) == 0 {
 		panic("no targets specified")
 	}
@@ -60,7 +61,7 @@ func NewReverseProxy(rp ReverseProxy) error {
 			)
 		}
 	}
-	return http.ListenAndServe(rp.Source, logHTTPRequest(mux))
+	return http.ListenAndServe(service.Source, logHTTPRequest(mux))
 }
 
 func logHTTPRequest(handler http.Handler) http.Handler {

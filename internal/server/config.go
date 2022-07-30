@@ -9,13 +9,17 @@ import (
 var ErrInvalidConfig = errors.New("ERR invalid config")
 
 type Config struct {
-	ReverseProxies []ReverseProxy `json:"reverse_proxy"`
+	Services []Service
 }
 
-type ReverseProxy struct {
-	Source      string   `json:"source"`
-	Algorithm   string   `json:"algorithm"`
+type Service struct {
+	Source       string          `json:"source"`
+	ReverseProxy ReverseProxyCfg `json:"reverse_proxy"`
+}
+
+type ReverseProxyCfg struct {
 	Targets     []string `json:"targets"`
+	Algorithm   string   `json:"lb_algorithm"`
 	HealthCheck struct {
 		Enabled  bool   `json:"enabled"`
 		Path     string `json:"path"`
@@ -34,20 +38,23 @@ func loadConfig(filePath string) *Config {
 	dec.DisallowUnknownFields()
 
 	var config Config
-	if err = dec.Decode(&config); err != nil {
+	if err = dec.Decode(&config.Services); err != nil {
 		panic(err)
 	}
 	// Setting Defaults
-	for _, rp := range config.ReverseProxies {
-		if rp.Algorithm == "" {
-			rp.Algorithm = "random"
-		}
-		if rp.HealthCheck.Enabled {
-			if rp.HealthCheck.Interval == 0 {
-				panic(ErrInvalidConfig)
+	for _, service := range config.Services {
+		rp := service.ReverseProxy
+		if len(rp.Targets) > 0 {
+			if rp.Algorithm == "" {
+				rp.Algorithm = "random"
 			}
-			if rp.HealthCheck.Timeout == 0 {
-				rp.HealthCheck.Timeout = 5
+			if rp.HealthCheck.Enabled {
+				if rp.HealthCheck.Interval == 0 {
+					panic(ErrInvalidConfig)
+				}
+				if rp.HealthCheck.Timeout == 0 {
+					rp.HealthCheck.Timeout = 5
+				}
 			}
 		}
 	}
