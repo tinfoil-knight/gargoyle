@@ -42,7 +42,8 @@ func NewReverseProxy(service Service) error {
 		}
 		proxy := httputil.NewSingleHostReverseProxy(url)
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			proxy.ServeHTTP(w, r)
+			rw := &customResponseWriter{w, false}
+			proxy.ServeHTTP(rw, r)
 		})
 	} else {
 		lb, err := loadbalancer.NewLoadBalancer(rp.Algorithm, rp.Targets)
@@ -50,8 +51,9 @@ func NewReverseProxy(service Service) error {
 			return err
 		}
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			rw := &customResponseWriter{w, false}
 			proxy := lb.GetSelectedProxy()
-			proxy.ServeHTTP(w, r)
+			proxy.ServeHTTP(rw, r)
 		})
 		if rp.HealthCheck.Enabled {
 			go lb.RunHealthChecks(
