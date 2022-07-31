@@ -22,6 +22,9 @@ go.work
 # Build dir for https://github.com/cosmtrek/air
 tmp
 
+# Build dir for Gargoyle
+bin
+
 # Custom
 TODO.md
 config.json

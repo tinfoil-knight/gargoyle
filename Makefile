@@ -10,4 +10,8 @@ format:
 	@echo "> Formatting the source"
 	gofmt -d -e
 
+clean:
+	@echo "> Cleaning up"
+	rm -rf tmp bin
+
 .PHONY: build run format

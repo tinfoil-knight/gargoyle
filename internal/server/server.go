@@ -22,14 +22,17 @@ func NewHTTPServer() {
 		go func() {
 			defer wg.Done()
 			log.Printf("INFO: Starting listening on %s", service.Source)
-			log.Fatal(NewReverseProxy(service))
+			mux, _ := NewReverseProxy(service)
+			handler := logHTTPRequest(mux)
+
+			log.Fatal(http.ListenAndServe(service.Source, handler))
 		}()
 	}
 
 	wg.Wait()
 }
 
-func NewReverseProxy(service Service) error {
+func NewReverseProxy(service Service) (*http.ServeMux, error) {
 	rp := service.ReverseProxy
 	if len(rp.Targets) == 0 {
 		panic("no targets specified")
@@ -38,7 +41,7 @@ func NewReverseProxy(service Service) error {
 	if len(rp.Targets) == 1 {
 		url, err := url.Parse(rp.Targets[0])
 		if err != nil {
-			return err
+			return nil, err
 		}
 		proxy := httputil.NewSingleHostReverseProxy(url)
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +51,7 @@ func NewReverseProxy(service Service) error {
 	} else {
 		lb, err := loadbalancer.NewLoadBalancer(rp.Algorithm, rp.Targets)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			rw := &customResponseWriter{w, false, service.Header}
@@ -63,7 +66,7 @@ func NewReverseProxy(service Service) error {
 			)
 		}
 	}
-	return http.ListenAndServe(service.Source, logHTTPRequest(mux))
+	return mux, nil
 }
 
 func logHTTPRequest(handler http.Handler) http.Handler {

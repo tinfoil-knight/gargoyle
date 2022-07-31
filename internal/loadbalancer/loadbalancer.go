@@ -73,12 +73,7 @@ func (lb *LoadBalancer) RunHealthChecks(interval time.Duration, timeout time.Dur
 					// TODO: find more client errors which can occur
 					panic(err)
 				}
-				if res.StatusCode != http.StatusOK {
-					service.healthy = false
-				} else {
-					service.healthy = true
-				}
-
+				service.healthy = res.StatusCode == http.StatusOK
 			}()
 		}
 
