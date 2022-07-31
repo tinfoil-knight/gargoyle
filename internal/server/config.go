@@ -63,6 +63,13 @@ func loadConfig(filePath string) *Config {
 				}
 			}
 		}
+
+		header := service.Header
+		for _, v := range header.Remove {
+			if _, ok := header.Add[v]; ok {
+				panic(ErrInvalidConfig)
+			}
+		}
 	}
 	return &config
 }
