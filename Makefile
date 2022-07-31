@@ -1,0 +1,13 @@
+build:
+	@echo "> Building binary"
+	go build -o bin/gargoyle .
+
+run:
+	@echo "> Starting Gargoyle"
+	go run gargoyle.go
+
+format:
+	@echo "> Formatting the source"
+	gofmt -d -e
+
+.PHONY: build run format
