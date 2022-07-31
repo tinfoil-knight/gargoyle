@@ -6,6 +6,7 @@ import "net/http"
 type customResponseWriter struct {
 	w           http.ResponseWriter
 	wroteHeader bool
+	headerCfg   HeaderCfg
 }
 
 func (s *customResponseWriter) Header() http.Header {
@@ -41,6 +42,12 @@ func (s *customResponseWriter) Flush() {
 func (s *customResponseWriter) handleHeaders() {
 	if s.wroteHeader == false {
 		s.w.Header().Set("Server", "Gargoyle 0.0.1")
+		for k, v := range s.headerCfg.Add {
+			s.w.Header().Set(k, v)
+		}
+		for _, v := range s.headerCfg.Remove {
+			s.w.Header().Del(v)
+		}
 		s.wroteHeader = true
 	}
 }

@@ -15,6 +15,7 @@ type Config struct {
 type Service struct {
 	Source       string          `json:"source"`
 	ReverseProxy ReverseProxyCfg `json:"reverse_proxy"`
+	Header       HeaderCfg       `json:"header"`
 }
 
 type ReverseProxyCfg struct {
@@ -26,6 +27,11 @@ type ReverseProxyCfg struct {
 		Interval int    `json:"interval"` // unit: seconds
 		Timeout  int    `json:"timeout"`  // unit: seconds
 	} `json:"health_check"`
+}
+
+type HeaderCfg struct {
+	Add    map[string]string `json:"add"`
+	Remove []string          `json:"remove"`
 }
 
 func loadConfig(filePath string) *Config {

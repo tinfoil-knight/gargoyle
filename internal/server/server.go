@@ -42,7 +42,7 @@ func NewReverseProxy(service Service) error {
 		}
 		proxy := httputil.NewSingleHostReverseProxy(url)
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			rw := &customResponseWriter{w, false}
+			rw := &customResponseWriter{w, false, service.Header}
 			proxy.ServeHTTP(rw, r)
 		})
 	} else {
@@ -51,7 +51,7 @@ func NewReverseProxy(service Service) error {
 			return err
 		}
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			rw := &customResponseWriter{w, false}
+			rw := &customResponseWriter{w, false, service.Header}
 			proxy := lb.GetSelectedProxy()
 			proxy.ServeHTTP(rw, r)
 		})
