@@ -66,10 +66,18 @@ func NewServiceController(service ServiceCfg) {
 		}
 
 		handler := logHTTPRequest(mux)
-		log.Printf("INFO: Starting listening on %s", service.Source)
+		log.Printf("INFO: Starting reverse proxy on %s", service.Source)
 		log.Fatal(http.ListenAndServe(service.Source, handler))
 	}
-	log.Printf("Service with port %s didn't have any required config", service.Source)
+
+	if service.Fs != nil {
+		fs := service.Fs
+		handler := logHTTPRequest(http.FileServer(http.Dir(fs.Path)))
+		http.Handle("/", handler)
+		log.Printf("INFO: Starting file server on %s", service.Source)
+		log.Fatal(http.ListenAndServe(service.Source, nil))
+	}
+	log.Printf("Port %s didn't have any required config for starting a service", service.Source)
 }
 
 func logHTTPRequest(handler http.Handler) http.Handler {

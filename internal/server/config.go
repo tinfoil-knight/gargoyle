@@ -3,7 +3,9 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"os"
+	"reflect"
 )
 
 var ErrInvalidConfig = errors.New("ERR invalid config")
@@ -16,6 +18,7 @@ type ServiceCfg struct {
 	Source       string           `json:"source"`
 	ReverseProxy *ReverseProxyCfg `json:"reverse_proxy"`
 	Header       *HeaderCfg       `json:"header"`
+	Fs           *FsConfig
 }
 
 type ReverseProxyCfg struct {
@@ -34,6 +37,10 @@ type HeaderCfg struct {
 	Remove []string          `json:"remove"`
 }
 
+type FsConfig struct {
+	Path string `json:"path"`
+}
+
 func loadConfig(filePath string) *Config {
 	f, err := os.Open(filePath)
 	defer f.Close()
@@ -47,8 +54,24 @@ func loadConfig(filePath string) *Config {
 	if err = dec.Decode(&config.Services); err != nil {
 		panic(err)
 	}
-	// Setting Defaults
+
 	for _, service := range config.Services {
+		// Check for conflicts
+		conflicts := [][]interface{}{{service.ReverseProxy, service.Fs}}
+		for _, list := range conflicts {
+			nonNil := 0
+			for _, item := range list {
+				if !reflect.ValueOf(item).IsNil() {
+					nonNil++
+					if nonNil > 1 {
+						panic(ErrInvalidConfig)
+					}
+				}
+			}
+		}
+
+		// Validating & Setting Defaults
+
 		if service.ReverseProxy != nil {
 			rp := service.ReverseProxy
 			if len(rp.Targets) > 0 {
@@ -74,6 +97,15 @@ func loadConfig(filePath string) *Config {
 				if _, ok := header.Add[v]; ok {
 					panic(ErrInvalidConfig)
 				}
+			}
+		}
+
+		if service.Fs != nil {
+			dirPath := service.Fs.Path
+			info, err := os.Stat(dirPath)
+			dirExists := !errors.Is(err, fs.ErrNotExist) && info.IsDir()
+			if !dirExists {
+				panic(err)
 			}
 		}
 	}
