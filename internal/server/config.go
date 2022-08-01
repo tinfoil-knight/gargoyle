@@ -9,13 +9,13 @@ import (
 var ErrInvalidConfig = errors.New("ERR invalid config")
 
 type Config struct {
-	Services []Service
+	Services []ServiceCfg
 }
 
-type Service struct {
-	Source       string          `json:"source"`
-	ReverseProxy ReverseProxyCfg `json:"reverse_proxy"`
-	Header       HeaderCfg       `json:"header"`
+type ServiceCfg struct {
+	Source       string           `json:"source"`
+	ReverseProxy *ReverseProxyCfg `json:"reverse_proxy"`
+	Header       *HeaderCfg       `json:"header"`
 }
 
 type ReverseProxyCfg struct {
@@ -49,25 +49,31 @@ func loadConfig(filePath string) *Config {
 	}
 	// Setting Defaults
 	for _, service := range config.Services {
-		rp := service.ReverseProxy
-		if len(rp.Targets) > 0 {
-			if rp.Algorithm == "" {
-				rp.Algorithm = "random"
-			}
-			if rp.HealthCheck.Enabled {
-				if rp.HealthCheck.Interval == 0 {
-					panic(ErrInvalidConfig)
+		if service.ReverseProxy != nil {
+			rp := service.ReverseProxy
+			if len(rp.Targets) > 0 {
+				if rp.Algorithm == "" {
+					rp.Algorithm = "random"
 				}
-				if rp.HealthCheck.Timeout == 0 {
-					rp.HealthCheck.Timeout = 5
+				if rp.HealthCheck.Enabled {
+					if rp.HealthCheck.Interval == 0 {
+						panic(ErrInvalidConfig)
+					}
+					if rp.HealthCheck.Timeout == 0 {
+						rp.HealthCheck.Timeout = 5
+					}
 				}
+			} else {
+				panic(ErrInvalidConfig)
 			}
 		}
 
-		header := service.Header
-		for _, v := range header.Remove {
-			if _, ok := header.Add[v]; ok {
-				panic(ErrInvalidConfig)
+		if service.Header != nil {
+			header := service.Header
+			for _, v := range header.Remove {
+				if _, ok := header.Add[v]; ok {
+					panic(ErrInvalidConfig)
+				}
 			}
 		}
 	}

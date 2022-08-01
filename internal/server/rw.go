@@ -6,7 +6,7 @@ import "net/http"
 type customResponseWriter struct {
 	w           http.ResponseWriter
 	wroteHeader bool
-	headerCfg   HeaderCfg
+	headerCfg   *HeaderCfg
 }
 
 func (s *customResponseWriter) Header() http.Header {
