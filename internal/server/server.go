@@ -43,8 +43,7 @@ func NewServiceController(service ServiceCfg) {
 			}
 			proxy := httputil.NewSingleHostReverseProxy(url)
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				rw := &customResponseWriter{w, false, service.Header}
-				proxy.ServeHTTP(rw, r)
+				proxy.ServeHTTP(w, r)
 			})
 		} else {
 			lb, err := loadbalancer.NewLoadBalancer(rp.Algorithm, rp.Targets)
@@ -52,9 +51,8 @@ func NewServiceController(service ServiceCfg) {
 				panic(err)
 			}
 			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				rw := &customResponseWriter{w, false, service.Header}
 				proxy := lb.GetSelectedProxy()
-				proxy.ServeHTTP(rw, r)
+				proxy.ServeHTTP(w, r)
 			})
 			if rp.HealthCheck.Enabled {
 				go lb.RunHealthChecks(
@@ -65,14 +63,14 @@ func NewServiceController(service ServiceCfg) {
 			}
 		}
 
-		handler := logHTTPRequest(mux)
+		handler := applyMiddlewares(mux, service)
 		log.Printf("INFO: Starting reverse proxy on %s", service.Source)
 		log.Fatal(http.ListenAndServe(service.Source, handler))
 	}
 
 	if service.Fs != nil {
 		fs := service.Fs
-		handler := logHTTPRequest(http.FileServer(http.Dir(fs.Path)))
+		handler := applyMiddlewares(http.FileServer(http.Dir(fs.Path)), service)
 		http.Handle("/", handler)
 		log.Printf("INFO: Starting file server on %s", service.Source)
 		log.Fatal(http.ListenAndServe(service.Source, nil))
@@ -86,4 +84,15 @@ func logHTTPRequest(handler http.Handler) http.Handler {
 		dmp, _ := httputil.DumpRequest(r, true)
 		log.Printf("%s", string(dmp))
 	})
+}
+
+func useCustomRewriter(handler http.Handler, service ServiceCfg) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rw := &customResponseWriter{w, false, service.Header}
+		handler.ServeHTTP(rw, r)
+	})
+}
+
+func applyMiddlewares(handler http.Handler, service ServiceCfg) http.Handler {
+	return logHTTPRequest(useCustomRewriter(handler, service))
 }
