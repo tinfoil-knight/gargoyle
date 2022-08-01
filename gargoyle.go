@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	server.NewHTTPServer()
+	server.Start("./config.json")
 }

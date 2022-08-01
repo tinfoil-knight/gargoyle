@@ -11,8 +11,8 @@ import (
 	"github.com/tinfoil-knight/gargoyle/internal/loadbalancer"
 )
 
-func NewHTTPServer() {
-	config := loadConfig("./config.json")
+func Start(configPath string) {
+	config := loadConfig(configPath)
 
 	var wg sync.WaitGroup
 

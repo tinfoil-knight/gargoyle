@@ -18,7 +18,7 @@ type ServiceCfg struct {
 	Source       string           `json:"source"`
 	ReverseProxy *ReverseProxyCfg `json:"reverse_proxy"`
 	Header       *HeaderCfg       `json:"header"`
-	Fs           *FsConfig
+	Fs           *FsConfig        `json:"fs"`
 }
 
 type ReverseProxyCfg struct {
