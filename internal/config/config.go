@@ -1,4 +1,4 @@
-package server
+package config
 
 import (
 	"encoding/json"
@@ -41,7 +41,7 @@ type FsConfig struct {
 	Path string `json:"path"`
 }
 
-func loadConfig(filePath string) *Config {
+func LoadConfig(filePath string) *Config {
 	f, err := os.Open(filePath)
 	defer f.Close()
 	if err != nil {

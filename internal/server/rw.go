@@ -1,12 +1,16 @@
 package server
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/tinfoil-knight/gargoyle/internal/config"
+)
 
 // customResponseWriter implements http.ResponseWriter, http.Pusher, http.Flusher
 type customResponseWriter struct {
 	w           http.ResponseWriter
 	wroteHeader bool
-	headerCfg   *HeaderCfg
+	headerCfg   *config.HeaderCfg
 }
 
 func (s *customResponseWriter) Header() http.Header {
