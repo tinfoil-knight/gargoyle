@@ -16,13 +16,13 @@ func logHTTPRequest(handler http.Handler) http.Handler {
 	})
 }
 
-func useCustomRewriter(handler http.Handler, service config.ServiceCfg) http.Handler {
+func useCustomRewriter(handler http.Handler, headerCfg config.HeaderCfg) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rw := &customResponseWriter{w, false, service.Header}
+		rw := &customResponseWriter{w, false, &headerCfg}
 		handler.ServeHTTP(rw, r)
 	})
 }
 
 func applyMiddlewares(handler http.Handler, service config.ServiceCfg) http.Handler {
-	return logHTTPRequest(useCustomRewriter(handler, service))
+	return logHTTPRequest(useCustomRewriter(handler, *service.Header))
 }
