@@ -27,6 +27,23 @@ func TestResponseHeaderModification(t *testing.T) {
 		}
 	})
 
+	t.Run("default Server header can be removed", func(t *testing.T) {
+		cfg := config.HeaderCfg{
+			Remove: []string{"Server"},
+		}
+		req := httptest.NewRequest(http.MethodGet, "http://testing.com", nil)
+		res := httptest.NewRecorder()
+
+		useCustomRewriter(handler, cfg).ServeHTTP(res, req)
+
+		want := ""
+		got := res.Result().Header.Get("Server")
+
+		if !strings.Contains(got, want) {
+			t.Errorf("expected %q to have %q", got, want)
+		}
+	})
+
 	t.Run("adding a new header works", func(t *testing.T) {
 		cfg := config.HeaderCfg{
 			Add: map[string]string{
