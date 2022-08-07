@@ -39,8 +39,8 @@ func TestResponseHeaderModification(t *testing.T) {
 		want := ""
 		got := res.Result().Header.Get("Server")
 
-		if !strings.Contains(got, want) {
-			t.Errorf("expected %q to have %q", got, want)
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
 		}
 	})
 
