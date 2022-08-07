@@ -19,6 +19,7 @@ type ServiceCfg struct {
 	ReverseProxy *ReverseProxyCfg `json:"reverse_proxy"`
 	Header       *HeaderCfg       `json:"header"`
 	Fs           *FsConfig        `json:"fs"`
+	Auth         *AuthConfig      `json:"auth"`
 }
 
 type ReverseProxyCfg struct {
@@ -39,6 +40,10 @@ type HeaderCfg struct {
 
 type FsConfig struct {
 	Path string `json:"path"`
+}
+
+type AuthConfig struct {
+	BasicAuth map[string]([]byte) `json:"basic_auth"` // map[Username][PasswordHash]
 }
 
 func LoadConfig(filePath string) *Config {
@@ -106,6 +111,18 @@ func LoadConfig(filePath string) *Config {
 			dirExists := !errors.Is(err, fs.ErrNotExist) && info.IsDir()
 			if !dirExists {
 				panic(err)
+			}
+		}
+
+		if service.Auth != nil {
+			basicAuth := service.Auth.BasicAuth
+			if len(basicAuth) == 0 {
+				panic(ErrInvalidConfig)
+			}
+			for username, hash := range basicAuth {
+				if username == "" || len(hash) == 0 {
+					panic(ErrInvalidConfig)
+				}
 			}
 		}
 	}
