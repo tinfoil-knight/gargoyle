@@ -23,13 +23,16 @@ type ServiceCfg struct {
 }
 
 type ReverseProxyCfg struct {
-	Targets     []string `json:"targets"`
-	Algorithm   string   `json:"lb_algorithm"`
+	Targets []string `json:"targets"`
+	// default: random
+	Algorithm   string `json:"lb_algorithm"`
 	HealthCheck struct {
-		Enabled  bool   `json:"enabled"`
-		Path     string `json:"path"`
-		Interval int    `json:"interval"` // unit: seconds
-		Timeout  int    `json:"timeout"`  // unit: seconds
+		Enabled bool   `json:"enabled"`
+		Path    string `json:"path"`
+		// unit: seconds
+		Interval int `json:"interval"`
+		// unit: seconds, default: 5
+		Timeout int `json:"timeout"`
 	} `json:"health_check"`
 }
 
@@ -43,6 +46,11 @@ type FsConfig struct {
 }
 
 type AuthConfig struct {
+	KeyAuth *struct {
+		Key string `json:"key"`
+		// default: X-Api-Key
+		Header string `json:"header"`
+	} `json:"key_auth"`
 	BasicAuth map[string]([]byte) `json:"basic_auth"` // map[Username][PasswordHash]
 }
 
@@ -61,18 +69,8 @@ func LoadConfig(filePath string) *Config {
 	}
 
 	for _, service := range config.Services {
-		// Check for conflicts
-		conflicts := [][]interface{}{{service.ReverseProxy, service.Fs}}
-		for _, list := range conflicts {
-			nonNil := 0
-			for _, item := range list {
-				if !reflect.ValueOf(item).IsNil() {
-					nonNil++
-					if nonNil > 1 {
-						panic(ErrInvalidConfig)
-					}
-				}
-			}
+		if err := checkForConflicts([]interface{}{service.ReverseProxy, service.Fs}); err != nil {
+			panic(err)
 		}
 
 		// Validating & Setting Defaults
@@ -115,16 +113,41 @@ func LoadConfig(filePath string) *Config {
 		}
 
 		if service.Auth != nil {
-			basicAuth := service.Auth.BasicAuth
-			if len(basicAuth) == 0 {
-				panic(ErrInvalidConfig)
+			auth := service.Auth
+			if err := checkForConflicts([]interface{}{auth.BasicAuth, auth.KeyAuth}); err != nil {
+				panic(err)
 			}
-			for username, hash := range basicAuth {
-				if username == "" || len(hash) == 0 {
+
+			if len(auth.BasicAuth) != 0 {
+				for username, hash := range auth.BasicAuth {
+					if username == "" || len(hash) == 0 {
+						panic(ErrInvalidConfig)
+					}
+				}
+			}
+
+			if auth.KeyAuth != nil {
+				if auth.KeyAuth.Key == "" {
 					panic(ErrInvalidConfig)
+				}
+				if auth.KeyAuth.Header == "" {
+					auth.KeyAuth.Header = "X-Api-Key"
 				}
 			}
 		}
 	}
 	return &config
+}
+
+func checkForConflicts(conflicts []interface{}) error {
+	nonNil := 0
+	for _, item := range conflicts {
+		if !reflect.ValueOf(item).IsNil() {
+			nonNil++
+			if nonNil > 1 {
+				return ErrInvalidConfig
+			}
+		}
+	}
+	return nil
 }

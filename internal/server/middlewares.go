@@ -26,12 +26,25 @@ func useCustomRewriter(handler http.Handler, headerCfg config.HeaderCfg) http.Ha
 
 func auth(handler http.Handler, auth config.AuthConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, pwd, ok := r.BasicAuth()
-		hash, _ := auth.BasicAuth[user]
-		if !ok || !check(hash, pwd) {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
+		// TODO: refactor
+		if auth.BasicAuth != nil {
+			user, pwd, ok := r.BasicAuth()
+			hash, _ := auth.BasicAuth[user]
+			if !ok || !check(hash, pwd) {
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+				return
+			}
 		}
+		if auth.KeyAuth != nil {
+			header := auth.KeyAuth.Header
+			cfgKey := auth.KeyAuth.Key
+			reqKey := r.Header.Get(header)
+			if cfgKey != reqKey {
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+				return
+			}
+		}
+
 		handler.ServeHTTP(w, r)
 	})
 }

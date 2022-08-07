@@ -12,7 +12,8 @@ HTTP Web Server
     - Serving Static Sites
 - HTTP Response Header Modification
 - Authentication
-    - Basic HTTP Authentication
+    - Basic HTTP Auth
+    - Key Auth
 
 ## Author
 - Kunal Kundu [@tinfoil-knight](https://github.com/tinfoil-knight)
