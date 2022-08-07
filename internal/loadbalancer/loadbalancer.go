@@ -54,7 +54,7 @@ func (lb *LoadBalancer) RunHealthChecks(interval time.Duration, timeout time.Dur
 	client := http.Client{
 		Timeout: timeout,
 	}
-	for range ticker.C {
+	for ; true; <-ticker.C {
 		var wg sync.WaitGroup
 		// TODO: inspect thread safety here
 		for _, service := range lb.services {
