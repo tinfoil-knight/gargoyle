@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/tinfoil-knight/gargoyle/internal/config"
@@ -27,7 +28,8 @@ func Start(configPath string) {
 }
 
 func NewServiceController(service config.ServiceCfg) {
-	if service.ReverseProxy != nil {
+	switch true {
+	case service.ReverseProxy != nil:
 		mux := reverseproxy.NewReverseProxy(service)
 		handler := applyMiddlewares(mux, service)
 		log.Printf("INFO: Starting reverse proxy on %s", service.Source)
@@ -37,9 +39,7 @@ func NewServiceController(service config.ServiceCfg) {
 			)
 		}
 		log.Fatal(http.ListenAndServe(service.Source, handler))
-	}
-
-	if service.Fs != nil {
+	case service.Fs != nil:
 		fs := service.Fs
 		handler := applyMiddlewares(http.FileServer(http.Dir(fs.Path)), service)
 		http.Handle("/", handler)
@@ -50,6 +50,8 @@ func NewServiceController(service config.ServiceCfg) {
 			)
 		}
 		log.Fatal(http.ListenAndServe(service.Source, nil))
+	default:
+		log.Printf("Port %s didn't have any required config for starting a service", service.Source)
+		os.Exit(1)
 	}
-	log.Printf("Port %s didn't have any required config for starting a service", service.Source)
 }
