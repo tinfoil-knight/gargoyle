@@ -1,6 +1,13 @@
+GOROOT = $(shell go env GOROOT)
+
 build:
 	@echo "> Building binary"
 	go build -o bin/gargoyle .
+
+gencert:
+	@echo "> Generating TLS cert"
+	mkdir -p .gargoyle
+	cd .gargoyle; go run "$(GOROOT)/src/crypto/tls/generate_cert.go" --rsa-bits=2048 --host=localhost
 
 run:
 	@echo "> Starting Gargoyle"

@@ -31,6 +31,11 @@ func NewServiceController(service config.ServiceCfg) {
 		mux := reverseproxy.NewReverseProxy(service)
 		handler := applyMiddlewares(mux, service)
 		log.Printf("INFO: Starting reverse proxy on %s", service.Source)
+		if service.TLS != nil && service.TLS.Enabled {
+			log.Fatal(
+				http.ListenAndServeTLS(service.Source, service.TLS.CertPath, service.TLS.KeyPath, handler),
+			)
+		}
 		log.Fatal(http.ListenAndServe(service.Source, handler))
 	}
 
@@ -39,6 +44,11 @@ func NewServiceController(service config.ServiceCfg) {
 		handler := applyMiddlewares(http.FileServer(http.Dir(fs.Path)), service)
 		http.Handle("/", handler)
 		log.Printf("INFO: Starting file server on %s", service.Source)
+		if service.TLS != nil && service.TLS.Enabled {
+			log.Fatal(
+				http.ListenAndServeTLS(service.Source, service.TLS.CertPath, service.TLS.KeyPath, handler),
+			)
+		}
 		log.Fatal(http.ListenAndServe(service.Source, nil))
 	}
 	log.Printf("Port %s didn't have any required config for starting a service", service.Source)

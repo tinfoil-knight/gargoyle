@@ -20,6 +20,14 @@ type ServiceCfg struct {
 	Header       *HeaderCfg       `json:"header"`
 	Fs           *FsConfig        `json:"fs"`
 	Auth         *AuthConfig      `json:"auth"`
+	TLS          *struct {
+		// default: false
+		Enabled bool `json:"enabled"`
+		// default: ./.gargoyle/cert.pem
+		CertPath string `json:"cert_path"`
+		// default: ./.gargoyle/key.pem
+		KeyPath string `json:"key_path"`
+	} `json:"tls"`
 }
 
 type ReverseProxyCfg struct {
@@ -27,6 +35,7 @@ type ReverseProxyCfg struct {
 	// default: random
 	Algorithm   string `json:"lb_algorithm"`
 	HealthCheck struct {
+		// default: false
 		Enabled bool   `json:"enabled"`
 		Path    string `json:"path"`
 		// unit: seconds
@@ -134,6 +143,17 @@ func LoadConfig(filePath string) *Config {
 					auth.KeyAuth.Header = "X-Api-Key"
 				}
 			}
+		}
+
+		if service.TLS != nil && service.TLS.Enabled {
+			tlsConfig := service.TLS
+			if tlsConfig.CertPath == "" {
+				tlsConfig.CertPath = "./.gargoyle/cert.pem"
+			}
+			if tlsConfig.KeyPath == "" {
+				tlsConfig.KeyPath = "./.gargoyle/key.pem"
+			}
+			// TODO: check if files exists
 		}
 	}
 	return &config

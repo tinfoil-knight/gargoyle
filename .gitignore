@@ -25,6 +25,9 @@ tmp
 # Build dir for Gargoyle
 bin
 
+# Default Directory for TLS Cers
+.gargoyle
+
 # Custom
 TODO.md
 config.json
