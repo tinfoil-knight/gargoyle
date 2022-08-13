@@ -40,6 +40,10 @@ Default config file path: `./config.json`
 ## Author
 - Kunal Kundu - [@tinfoil-knight](https://github.com/tinfoil-knight)
 
+## License
+
+Distributed under the MIT License. See [LICENSE](./LICENSE) for more information.
+
 ## Acknowledgements
 
 - Blog Posts & Documentation from
