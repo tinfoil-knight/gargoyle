@@ -32,7 +32,7 @@
 				"http://localhost:3040",
 				"http://localhost:3050"
 			],
-			// load balancing algorithm to use, default: "random"
+			// load balancing algorithm to use, allowed: "random", "round-robin", default: "random"
 			"lb_algorithm": "round-robin",
 			"health_check": {
 				"enabled": true,
@@ -101,7 +101,7 @@ Supported Methods: `basic_auth`, `key_auth`
 	]
 	```
 	- Hashes are encoded in base64.
-	- Hashing Algorithm used is bcrypt.
+	- Hashing algorithm used is bcrypt.
 
 - API Key Auth
 	```json

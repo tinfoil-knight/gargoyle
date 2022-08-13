@@ -18,10 +18,15 @@ HTTP Web Server
 
 ## Getting Started
 
+**Pre-requisites**
+- [Go >= 1.18](https://go.dev/)
+- [GNU Make](https://www.gnu.org/software/make/)
+
 ### Configuration
 - See [CONFIG.md](./CONFIG.md)
 
 ### Build from Source
+
 After cloning the repo, run
 
 ```shell
