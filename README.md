@@ -14,6 +14,38 @@ HTTP Web Server
 - Authentication
     - Basic HTTP Auth
     - Key Auth
+- Optional TLS Support
+
+## Getting Started
+
+### Configuration
+- See [CONFIG.md](./CONFIG.md)
+
+### Build from Source
+After cloning the repo, run
+
+```shell
+make build
+```
+
+This will create a binary in the `bin` directory.
+
+### Usage
+
+```shell
+./gargoyle <optional path to config file>
+```
+Default config file path: `./config.json`
 
 ## Author
-- Kunal Kundu [@tinfoil-knight](https://github.com/tinfoil-knight)
+- Kunal Kundu - [@tinfoil-knight](https://github.com/tinfoil-knight)
+
+## Acknowledgements
+
+- Blog Posts & Documentation from
+  - [Caddy](https://caddyserver.com/)
+  - [Nginx](https://www.nginx.com/)
+- Learning Centers
+  - [Cloudflare](https://www.cloudflare.com/en-in/learning/)
+  - [Kong](https://konghq.com/learning-center)
+- Talk on "Building a proxy server in Golang" by [@mauricio](https://github.com/mauricio)
