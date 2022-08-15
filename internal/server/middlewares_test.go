@@ -17,7 +17,7 @@ func TestResponseHeaderModification(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "http://testing.com", nil)
 		res := httptest.NewRecorder()
 
-		useCustomRewriter(handler, cfg).ServeHTTP(res, req)
+		useHeaderModifier(handler, cfg).ServeHTTP(res, req)
 
 		want := "Gargoyle"
 		got := res.Result().Header.Get("Server")
@@ -34,7 +34,7 @@ func TestResponseHeaderModification(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "http://testing.com", nil)
 		res := httptest.NewRecorder()
 
-		useCustomRewriter(handler, cfg).ServeHTTP(res, req)
+		useHeaderModifier(handler, cfg).ServeHTTP(res, req)
 
 		want := ""
 		got := res.Result().Header.Get("Server")
@@ -53,7 +53,7 @@ func TestResponseHeaderModification(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "http://testing.com", nil)
 		res := httptest.NewRecorder()
 
-		useCustomRewriter(handler, cfg).ServeHTTP(res, req)
+		useHeaderModifier(handler, cfg).ServeHTTP(res, req)
 
 		want := "Bar"
 		got := res.Result().Header.Get("Foo")
@@ -71,7 +71,7 @@ func TestResponseHeaderModification(t *testing.T) {
 		res := httptest.NewRecorder()
 		res.Header().Add("X-Request-Id", "1")
 
-		useCustomRewriter(handler, cfg).ServeHTTP(res, req)
+		useHeaderModifier(handler, cfg).ServeHTTP(res, req)
 
 		want := ""
 		got := res.Result().Header.Get("X-Request-Id")

@@ -17,9 +17,9 @@ func logHTTPRequest(handler http.Handler) http.Handler {
 	})
 }
 
-func useCustomRewriter(handler http.Handler, headerCfg config.HeaderCfg) http.Handler {
+func useHeaderModifier(handler http.Handler, headerCfg config.HeaderCfg) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rw := &customResponseWriter{w, false, &headerCfg}
+		rw := &headerModifier{w, false, &headerCfg}
 		handler.ServeHTTP(rw, r)
 	})
 }
@@ -61,7 +61,7 @@ func check(hash []byte, pwd string) bool {
 
 func applyMiddlewares(handler http.Handler, service config.ServiceCfg) http.Handler {
 	if service.Header != nil {
-		handler = useCustomRewriter(handler, *service.Header)
+		handler = useHeaderModifier(handler, *service.Header)
 	}
 	if service.Auth != nil {
 		handler = auth(handler, *service.Auth)

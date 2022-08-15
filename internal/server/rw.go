@@ -6,29 +6,29 @@ import (
 	"github.com/tinfoil-knight/gargoyle/internal/config"
 )
 
-// customResponseWriter implements http.ResponseWriter, http.Pusher, http.Flusher
-type customResponseWriter struct {
+// headerModifier implements http.ResponseWriter, http.Pusher, http.Flusher
+type headerModifier struct {
 	w           http.ResponseWriter
 	wroteHeader bool
 	headerCfg   *config.HeaderCfg
 }
 
-func (s *customResponseWriter) Header() http.Header {
+func (s *headerModifier) Header() http.Header {
 	return s.w.Header()
 }
 
-func (s *customResponseWriter) WriteHeader(statusCode int) {
+func (s *headerModifier) WriteHeader(statusCode int) {
 	s.handleHeaders()
 	s.w.WriteHeader(statusCode)
 }
 
-func (s *customResponseWriter) Write(b []byte) (int, error) {
+func (s *headerModifier) Write(b []byte) (int, error) {
 	s.handleHeaders() // for when WriteHeader is not called
 	return s.w.Write(b)
 }
 
 // Push implements the http.Pusher interface.
-func (s *customResponseWriter) Push(target string, opts *http.PushOptions) error {
+func (s *headerModifier) Push(target string, opts *http.PushOptions) error {
 	if pusher, ok := s.w.(http.Pusher); ok {
 		return pusher.Push(target, opts)
 	}
@@ -36,14 +36,14 @@ func (s *customResponseWriter) Push(target string, opts *http.PushOptions) error
 }
 
 // Flush implements the http.Flusher interface.
-func (s *customResponseWriter) Flush() {
+func (s *headerModifier) Flush() {
 	f, ok := s.w.(http.Flusher)
 	if ok {
 		f.Flush()
 	}
 }
 
-func (s *customResponseWriter) handleHeaders() {
+func (s *headerModifier) handleHeaders() {
 	if s.wroteHeader == false {
 		s.w.Header().Set("Server", "Gargoyle 0.0.1")
 		if s.headerCfg != nil {
