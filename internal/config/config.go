@@ -18,6 +18,7 @@ type ServiceCfg struct {
 	Source       string           `json:"source"`
 	ReverseProxy *ReverseProxyCfg `json:"reverse_proxy"`
 	Header       *HeaderCfg       `json:"header"`
+	Rewrite      *RewriteCfg      `json:"rewrite"`
 	Fs           *FsConfig        `json:"fs"`
 	Auth         *AuthConfig      `json:"auth"`
 	TLS          *struct {
@@ -49,6 +50,8 @@ type HeaderCfg struct {
 	Add    map[string]string `json:"add"`
 	Remove []string          `json:"remove"`
 }
+
+type RewriteCfg map[string]string // from : to
 
 type FsConfig struct {
 	Path string `json:"path"`

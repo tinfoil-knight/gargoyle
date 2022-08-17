@@ -15,6 +15,7 @@ HTTP Web Server
     - Basic HTTP Auth
     - Key Auth
 - Optional TLS Support
+- URL Rewrites
 
 ## Getting Started
 

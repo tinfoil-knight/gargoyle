@@ -24,6 +24,18 @@ func useHeaderModifier(handler http.Handler, headerCfg config.HeaderCfg) http.Ha
 	})
 }
 
+func urlRewriter(handler http.Handler, rewriteCfg config.RewriteCfg) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for from, to := range rewriteCfg {
+			if from == r.URL.Path {
+				r.URL.Path = to
+				break
+			}
+		}
+		handler.ServeHTTP(w, r)
+	})
+}
+
 func auth(handler http.Handler, auth config.AuthConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: refactor
@@ -62,6 +74,9 @@ func check(hash []byte, pwd string) bool {
 func applyMiddlewares(handler http.Handler, service config.ServiceCfg) http.Handler {
 	if service.Header != nil {
 		handler = useHeaderModifier(handler, *service.Header)
+	}
+	if service.Rewrite != nil {
+		handler = urlRewriter(handler, *service.Rewrite)
 	}
 	if service.Auth != nil {
 		handler = auth(handler, *service.Auth)
