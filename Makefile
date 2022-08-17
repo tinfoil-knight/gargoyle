@@ -4,6 +4,10 @@ build:
 	@echo "> Building binary"
 	go build -o bin/gargoyle .
 
+build-docker:
+	@echo "> Building Docker image"
+	docker build -t gargoyle .
+
 gencert:
 	@echo "> Generating TLS cert"
 	mkdir -p .gargoyle

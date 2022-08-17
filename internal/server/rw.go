@@ -13,6 +13,8 @@ type headerModifier struct {
 	headerCfg   *config.HeaderCfg
 }
 
+var _ http.ResponseWriter = (*headerModifier)(nil)
+
 func (s *headerModifier) Header() http.Header {
 	return s.w.Header()
 }
