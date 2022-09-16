@@ -15,7 +15,15 @@ type Config struct {
 }
 
 type ServiceCfg struct {
-	Source       string           `json:"source"`
+	Source  string `json:"source"`
+	Timeout struct {
+		// unit: seconds, default: 0
+		Read int `json:"read"`
+		// unit: seconds, default: 0
+		Write int `json:"write"`
+		// unit: seconds, default: 0
+		Idle int `json:"idle"`
+	} `json:"timeout"`
 	ReverseProxy *ReverseProxyCfg `json:"reverse_proxy"`
 	Header       *HeaderCfg       `json:"header"`
 	Rewrite      *RewriteCfg      `json:"rewrite"`
