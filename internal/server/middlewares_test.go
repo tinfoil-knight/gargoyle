@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tinfoil-knight/gargoyle/internal/config"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestResponseHeaderModification(t *testing.T) {
@@ -78,6 +79,60 @@ func TestResponseHeaderModification(t *testing.T) {
 
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+}
+
+func TestAuth(t *testing.T) {
+	handler := http.HandlerFunc(dummyHandler)
+	hash, _ := bcrypt.GenerateFromPassword([]byte("secret"), bcrypt.DefaultCost)
+	cfg := config.AuthConfig{
+		BasicAuth: map[string][]byte{
+			"first_user": hash,
+		},
+	}
+
+	t.Run("basic auth throws error without password", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "http://testing.com", nil)
+		res := httptest.NewRecorder()
+
+		auth(handler, cfg).ServeHTTP(res, req)
+
+		want := http.StatusUnauthorized
+		got := res.Result().StatusCode
+
+		if got != want {
+			t.Errorf("expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("basic auth throws error on wrong password", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "http://testing.com", nil)
+		req.SetBasicAuth("first_user", "not_secret")
+		res := httptest.NewRecorder()
+
+		auth(handler, cfg).ServeHTTP(res, req)
+
+		want := http.StatusUnauthorized
+		got := res.Result().StatusCode
+
+		if got != want {
+			t.Errorf("expected %d, got %d", want, got)
+		}
+	})
+
+	t.Run("basic auth works for correct username and password", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "http://testing.com", nil)
+		req.SetBasicAuth("first_user", "secret")
+		res := httptest.NewRecorder()
+
+		auth(handler, cfg).ServeHTTP(res, req)
+
+		want := http.StatusOK
+		got := res.Result().StatusCode
+
+		if got != want {
+			t.Errorf("expected %d, got %d", want, got)
 		}
 	})
 }
